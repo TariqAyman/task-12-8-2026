@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\User;
+use App\Services\AuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /*
@@ -16,7 +20,10 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => Cache::flush())
     ->in('Feature');
+
+pest()->extend(TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +54,40 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Build the HTTP Basic Authentication header for the given user.
+ *
+ * @return array<string, string>
+ */
+function basicAuth(User $user, string $password = 'password'): array
+{
+    return [
+        'Authorization' => 'Basic '.base64_encode($user->email.':'.$password),
+    ];
+}
+
+/**
+ * Drop the guards the previous request resolved.
+ *
+ * Every test request runs against the same application instance, so a guard
+ * that already resolved a user keeps returning it. A real request handles this
+ * on its own by booting a fresh process.
+ */
+function forgetResolvedGuards(): void
+{
+    Auth::forgetGuards();
+}
+
+/**
+ * Build the bearer token header for the given user.
+ *
+ * @return array<string, string>
+ */
+function bearerAuth(User $user): array
+{
+    return [
+        'Authorization' => 'Bearer '.$user->createToken(AuthService::TOKEN_NAME)->plainTextToken,
+    ];
 }
