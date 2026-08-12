@@ -1,0 +1,876 @@
+{
+    "info": {
+        "name": "Customer & Service API",
+        "description": "CRUD REST API over customers and the services they subscribe to.\n\n**Authentication** \u2014 every request except `Log in` is protected. Two schemes are accepted on the same routes:\n\n- **Bearer token** (collection default): run `Authentication \u2192 Log in` once; its test script stores `access_token` in the `token` collection variable and every other request reuses it.\n- **HTTP Basic**: `{{email}}` / `{{password}}`, shown by `Authentication \u2192 List customers with HTTP Basic`.\n\n**Variables** \u2014 set `baseUrl`, `email` and `password` in the environment. `customerId` and `serviceId` are filled in automatically by the two create requests.\n\nGenerated from the OpenAPI document at `/api/documentation`.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "email",
+            "value": "test@example.com",
+            "type": "string"
+        },
+        {
+            "key": "password",
+            "value": "password",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "customerId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "serviceId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "description": "Obtain and manage personal access tokens.",
+            "item": [
+                {
+                    "name": "Log in",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Exchanges an email and password for a Sanctum personal access token. The test script stores the token in the `token` collection variable, so run this first.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "",
+                                    "pm.test('a token is issued', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    pm.expect(body).to.have.property('access_token');",
+                                    "});",
+                                    "",
+                                    "pm.collectionVariables.set('token', body.access_token);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Authenticated user",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        },
+                        "description": "Returns the user the request was authenticated as."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Refresh token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/refresh",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "description": "Revokes the token the request was made with and issues a new one. The test script replaces the stored token. Requires a bearer token; Basic credentials cannot be refreshed."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "",
+                                    "pm.test('a token is issued', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    pm.expect(body).to.have.property('access_token');",
+                                    "});",
+                                    "",
+                                    "pm.collectionVariables.set('token', body.access_token);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Log out",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "description": "Revokes the token the request was made with."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List customers with HTTP Basic",
+                    "request": {
+                        "method": "GET",
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "{{email}}",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{password}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers"
+                            ]
+                        },
+                        "description": "The same endpoint as `Customers \u2192 List customers`, authenticated with HTTP Basic instead of a bearer token. No token is needed for this scheme."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Customers",
+            "description": "Manage customers.",
+            "item": [
+                {
+                    "name": "List customers",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers?",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Free text filter",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "description": "Filter by status",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "created_at",
+                                    "description": "Column to order by",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "direction",
+                                    "value": "desc",
+                                    "description": "asc or desc",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15",
+                                    "description": "1-100, defaults to 15",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page to return",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Paginated listing. Enable the query parameters to filter by name, email or company (`search`), by `status`, and to sort or page through the results."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers"
+                            ]
+                        },
+                        "description": "Creates a customer. `name` and `email` are required and the email must be unique. The test script stores the new id in `customerId`.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"phone\": \"+1 555 0100\",\n    \"company\": \"Doe Consulting\",\n    \"address\": \"1 Market Street\",\n    \"city\": \"Berlin\",\n    \"country\": \"Germany\",\n    \"status\": \"active\",\n    \"notes\": \"Key account.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "",
+                                    "pm.test('the customer is created', function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.collectionVariables.set('customerId', body.data.id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Show customer",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers/:customer",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "{{customerId}}"
+                                }
+                            ]
+                        },
+                        "description": "Returns one customer with its service count."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update customer",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers/:customer",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "{{customerId}}"
+                                }
+                            ]
+                        },
+                        "description": "Full update of a customer.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Jane Roe\",\n    \"email\": \"jane@example.com\",\n    \"phone\": \"+1 555 0100\",\n    \"company\": \"Doe Consulting\",\n    \"address\": \"1 Market Street\",\n    \"city\": \"Berlin\",\n    \"country\": \"Germany\",\n    \"status\": \"active\",\n    \"notes\": \"Renamed.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Partially update customer",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers/:customer",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "{{customerId}}"
+                                }
+                            ]
+                        },
+                        "description": "Updates only the given fields.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"inactive\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete customer",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customers/:customer",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customers",
+                                ":customer"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "customer",
+                                    "value": "{{customerId}}"
+                                }
+                            ]
+                        },
+                        "description": "Soft deletes the customer together with every service that belongs to it, in one transaction, and invalidates the cached service listings."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Services of a customer",
+                    "description": "The services belonging to one customer.",
+                    "item": [
+                        {
+                            "name": "List services of a customer",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/customers/:customer/services?",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "customers",
+                                        ":customer",
+                                        "services"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "",
+                                            "description": "Free text filter",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "status",
+                                            "value": "",
+                                            "description": "pending, active, suspended or cancelled",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "billing_cycle",
+                                            "value": "",
+                                            "description": "one_time, monthly, quarterly or yearly",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "created_at",
+                                            "description": "Column to order by",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "direction",
+                                            "value": "desc",
+                                            "description": "asc or desc",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "per_page",
+                                            "value": "15",
+                                            "description": "1-100, defaults to 15",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "Page to return",
+                                            "disabled": true
+                                        }
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "customer",
+                                            "value": "{{customerId}}"
+                                        }
+                                    ]
+                                },
+                                "description": "Paginated listing scoped to the customer in the path. Responses are cached and invalidated automatically whenever a service changes."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create service for a customer",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/customers/:customer/services",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "customers",
+                                        ":customer",
+                                        "services"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "customer",
+                                            "value": "{{customerId}}"
+                                        }
+                                    ]
+                                },
+                                "description": "Creates a service owned by the customer in the path. `name` and `price` are required. The test script stores the new id in `serviceId`.",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Managed Hosting\",\n    \"description\": \"Fully managed hosting with daily backups.\",\n    \"price\": 149.99,\n    \"currency\": \"EUR\",\n    \"billing_cycle\": \"monthly\",\n    \"status\": \"active\",\n    \"starts_at\": \"2026-01-01\",\n    \"ends_at\": \"2026-12-31\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "const body = pm.response.json();",
+                                            "",
+                                            "pm.test('the service is created', function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "",
+                                            "pm.collectionVariables.set('serviceId', body.data.id);"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Services",
+            "description": "Manage the services belonging to customers.",
+            "item": [
+                {
+                    "name": "List services",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/services?",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "services"
+                            ],
+                            "query": [
+                                {
+                                    "key": "customer_id",
+                                    "value": "",
+                                    "description": "Restrict the listing to a single customer",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Free text filter",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "description": "pending, active, suspended or cancelled",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "billing_cycle",
+                                    "value": "",
+                                    "description": "one_time, monthly, quarterly or yearly",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "created_at",
+                                    "description": "Column to order by",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "direction",
+                                    "value": "desc",
+                                    "description": "asc or desc",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15",
+                                    "description": "1-100, defaults to 15",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page to return",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Paginated listing across every customer. Enable `customer_id` to restrict it to one customer. Responses are cached and invalidated on every write."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Show service",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/services/:service",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "services",
+                                ":service"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "service",
+                                    "value": "{{serviceId}}"
+                                }
+                            ]
+                        },
+                        "description": "Returns one service together with its customer."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update service",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/services/:service",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "services",
+                                ":service"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "service",
+                                    "value": "{{serviceId}}"
+                                }
+                            ]
+                        },
+                        "description": "Full update of a service. Send `customer_id` to move it to another customer.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Managed Hosting\",\n    \"description\": \"Fully managed hosting with daily backups.\",\n    \"price\": 199.0,\n    \"currency\": \"EUR\",\n    \"billing_cycle\": \"yearly\",\n    \"status\": \"active\",\n    \"starts_at\": \"2026-01-01\",\n    \"ends_at\": \"2026-12-31\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Partially update service",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/services/:service",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "services",
+                                ":service"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "service",
+                                    "value": "{{serviceId}}"
+                                }
+                            ]
+                        },
+                        "description": "Updates only the given fields.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"suspended\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete service",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/services/:service",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "services",
+                                ":service"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "service",
+                                    "value": "{{serviceId}}"
+                                }
+                            ]
+                        },
+                        "description": "Soft deletes the service and invalidates the cached listings."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
