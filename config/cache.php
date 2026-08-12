@@ -133,4 +133,18 @@ return [
 
     'serializable_classes' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Service Listing Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | The number of seconds the API caches service listing payloads for. The
+    | cached payloads are invalidated eagerly whenever a service is written,
+    | so this value only bounds how long a stale entry may survive a flush
+    | that never happens (for example, a direct database modification).
+    |
+    */
+
+    'service_ttl' => env('CACHE_SERVICE_TTL', 300),
+
 ];
